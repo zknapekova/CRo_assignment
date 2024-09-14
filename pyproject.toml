@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "cro-assignment"
+version = "1"
+description = "Virtual environment for CRo task solution."
+authors = ["zknapekova"]
+readme = "README.md"
+packages = [{include = "cro_assignment"}]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+pandas = "^2.2.2"
+bs4 = "^0.0.2"
+lxml = "^5.3.0"
+
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.3.3"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
