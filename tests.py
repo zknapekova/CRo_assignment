@@ -1,8 +1,10 @@
 import pytest
 import pandas as pd
-from functions import delete_rows, parse_xml
+from functions import delete_rows, parse_xml, find_xml_files
 from exceptions import EmptyDataFrameError, ColumnDoesNotExist
 import json
+import os
+import shutil
 
 df_test = pd.DataFrame({
     'ObjectID': [1, 1, 2, 2, 3, 3, 4, 4, 5],
@@ -58,3 +60,18 @@ def test_parse_xml(test_data):
     with open('output.json', 'r', encoding='utf-16') as file:
         result_data = json.load(file)
     assert expected_data == result_data
+    os.remove('test_file.xml')
+
+def test_find_xml_files(test_data):
+    with open('test_file2.xml', 'w', encoding='utf-16') as f:
+        f.write(test_data)
+    os.mkdir('.\\subdir')
+    with open('.\\subdir\\test_file3.xml', 'w', encoding='utf-16') as f:
+        f.write(test_data)
+
+    assert find_xml_files('.', search_sub=True, regex='^test.*') == ['.\\test_file2.xml', '.\\subdir\\test_file3.xml']
+    assert find_xml_files('.', search_sub=False, regex='^test.*') == ['.\\test_file2.xml']
+    os.remove('test_file2.xml')
+    shutil.rmtree('subdir')
+
+
