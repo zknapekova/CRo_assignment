@@ -4,7 +4,4 @@ The repository contains solutions to assignment: https://github.com/triopium/pro
 For creating virtual environment and installing packages please run:
 ```sh
 poetry install
-``` 
-```sh
-poetry shell
-``` 
+```
