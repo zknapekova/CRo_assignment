@@ -3,6 +3,3 @@ class EmptyDataFrameError(Exception):
 
 class ColumnDoesNotExist(Exception):
     pass
-
-class FileTypeIsNotSupported(Exception):
-    pass

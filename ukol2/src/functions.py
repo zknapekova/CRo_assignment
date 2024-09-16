@@ -1,41 +1,20 @@
 import pandas as pd
-from exceptions import EmptyDataFrameError, ColumnDoesNotExist, FileTypeIsNotSupported
+from exceptions import FileTypeIsNotSupported
 from bs4 import BeautifulSoup
 import json
 import os
 import argparse
 import re
 from setup_logging import setup_logger
+from dicttoxml import dicttoxml
 
-processed_success_logger = setup_logger('proccessed_success', 'proccessed_success.log')
-processed_error_logger = setup_logger('processed_error', 'processed_error.log')
-
-
-def delete_rows(df: pd.DataFrame, id_col: str, check_na_col: str) -> list:
-    # check if the table is not empty
-    if df.empty:
-        raise EmptyDataFrameError("The DataFrame is empty")
-
-    missing_cols = [col for col in [id_col, check_na_col] if col not in df.columns]
-    if missing_cols:
-        raise ColumnDoesNotExist(f"Missing columns: {', '.join(missing_cols)}")
-
-    # get ObjectIDs for which all Name values are empty
-    ids_all_na = df.groupby(id_col)[check_na_col].apply(lambda x: x.isnull().all()).reset_index()
-
-    # get first occurrences for those IDs
-    first_occurrence = df[
-        df[id_col].isin(ids_all_na[id_col][ids_all_na[check_na_col] == True])].drop_duplicates(id_col)
-
-    # delete all non empty values and combine it with first_occurrence df
-    rows_to_keep = pd.concat([df.dropna(subset=[check_na_col]), first_occurrence])
-
-    return df[~df.index.isin(rows_to_keep.index)].index.tolist()
+processed_success_logger = setup_logger('proccessed_success', './proccessed_success.log')
+processed_error_logger = setup_logger('processed_error', './processed_error.log')
 
 
 def set_output_file(path, output_file=None, output_dir=None):
     if output_file is not None:
-        return output_file
+        return os.path.splitext(output_file)[0]
 
     file_name, _ = os.path.splitext(os.path.basename(path))
 
@@ -64,9 +43,18 @@ def parse_xml(path: str, output_type: str, output_file: str = None, output_dir: 
         if output_type == 'json':
             with open(f'{output_path}.json', 'w', encoding='utf-16') as f:
                 json.dump(combined_data, f)
-        elif output_type in ('csv', 'tsv'):
+        elif output_type == 'csv':
             pd.DataFrame([combined_data]).to_csv(f'{output_path}.{output_type}', encoding='utf-16')
+        elif output_type == 'tsv':
+            pd.DataFrame([combined_data]).to_csv(f'{output_path}.{output_type}', encoding='utf-16', sep="\t")
+        elif output_type == 'xml':
+            xml = dicttoxml(combined_data)
+            xml_decode = xml.decode()
+            with open(f'{output_path}.xml', 'w', encoding='utf-8') as file:
+                file.write(xml_decode)
+
         processed_success_logger.info(f'{output_path}.{output_type} created successfully')
+
     except Exception as e:
         processed_error_logger.error(f'Parsing {path} failed due to error: {str(e)}.')
 
@@ -84,7 +72,8 @@ def parse_arguments():
     parse_file = subparsers.add_parser('parse_file', help='Parsing single XML file')
     parse_file.add_argument("--source_file", help="source file", action="store", dest="source")
     parse_file.add_argument("--output_file", help="output file (optional)", action="store", dest="output", default=None)
-    parse_file.add_argument("--otype", help="possible options: csv,tsv,json,db", action="store", dest="out_type")
+    parse_file.add_argument("--otype", help="possible options: csv,tsv,json,db", action="store", dest="out_type",
+                            required=False, default=None)
 
     search_and_parse = subparsers.add_parser('search_and_parse',
                                              help='Searching a directory and process all XML files within it.')
@@ -97,18 +86,29 @@ def parse_arguments():
                                   help="Regular expression for file name. Kindly use double quotes.",
                                   action="store", dest="regex")
     search_and_parse.add_argument("--output_dir", help="output directory", action="store", dest="output_dir",
-                                  default='.',
-                                  type=dir_path)
+                                  default='.', type=dir_path)
     search_and_parse.add_argument("--otype", help="possible options: csv,tsv,json,db", action="store", dest="out_type")
 
     return parser.parse_args()
 
 
 def validate_arguments_parse_file(args):
-    if not os.path.isfile(args.source):
-        raise FileNotFoundError("Source file was not found")
-    if args.out_type not in ('csv', 'json', 'tsv'):
-        raise FileTypeIsNotSupported("Data can be parsed to json, csv or tsv.")
+    if args.command == 'parse_file':
+        if not os.path.isfile(os.path.abspath(args.source)):
+            raise FileNotFoundError("Source file was not found")
+        if not args.output:
+            args.output = os.path.splitext(args.source)[0]
+
+        output_ext = os.path.splitext(args.output)[1].replace('.', '')
+        supported_types = ['csv', 'json', 'tsv', 'xml']
+
+        if args.out_type is None:
+            if output_ext in supported_types:
+                args.out_type = output_ext
+            else:
+                raise FileTypeIsNotSupported("Data can be parsed into json, csv or tsv.")
+        elif args.out_type not in supported_types:
+            raise FileTypeIsNotSupported("Data can be parsed into json, csv or tsv.")
 
 
 def match_file(file, pattern):

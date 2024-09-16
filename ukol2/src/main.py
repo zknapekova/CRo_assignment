@@ -1,11 +1,7 @@
-from functions import *
-import pandas as pd
+from functions import parse_arguments, validate_arguments_parse_file, parse_xml, find_xml_files
+
 
 def main():
-
-    #df = pd.read_csv('data_cleanup.tsv', sep='\t')
-    #print(delete_rows(df, id_col='ObjectID', check_na_col='Name'))
-
     args = parse_arguments()
     if args.command == 'parse_file':
         validate_arguments_parse_file(args)

@@ -47,6 +47,17 @@ files = [
 ]
 
 [[package]]
+name = "dicttoxml"
+version = "1.7.16"
+description = "Converts a Python dictionary or other native data type into a valid XML string."
+optional = false
+python-versions = ">=3.6"
+files = [
+    {file = "dicttoxml-1.7.16-py3-none-any.whl", hash = "sha256:8677671496d0d38e66c7179f82a7e9059f94887777955dc71b0ac602ee637c26"},
+    {file = "dicttoxml-1.7.16.tar.gz", hash = "sha256:6f36ce644881db5cd8940bee9b7cb3f3f6b7b327ba8a67d83d3e2caa0538bf9d"},
+]
+
+[[package]]
 name = "exceptiongroup"
 version = "1.2.2"
 description = "Backport of PEP 654 (exception groups)"
@@ -480,4 +491,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "6e7022d608e12e5ab4aa4ea2f1f96f92ec0db5d485a7c0f678766c89cda291c6"
+content-hash = "273abdecccf001a3695687afe971816e859c4ecb5a3824edaf8b3fd3460912d8"
